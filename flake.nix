@@ -11,13 +11,13 @@
 	packages.default = 
 	  pkgs.stdenv.mkDerivation {
 	    src = ./.;
-	    name = "yolo-mark";
+	    name = "yolo_mark";
 	    nativeBuildInputs = [
 	      pkgs.cmake
 	      pkgs.gcc
 	    ];
 	    buildInputs = [
-	      pkgs.opencv
+	      (pkgs.opencv.override { enableGtk2 = true; })
 	    ];
 	    configurePhase = ''
 	      cmake .
