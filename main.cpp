@@ -365,28 +365,32 @@ int main(int argc, char *argv[])
 		std::vector<cv::String> filenames_in_folder_cv;
 		glob(path_cv, filenames_in_folder_cv); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
 		for (auto &filename : filenames_in_folder_cv) { 
-			bool pop_file = false;
-			auto pop_file_it = image_load_mask.begin();
-			for (auto accepted_name_it = image_load_mask.begin(); accepted_name_it != image_load_mask.end(); ++accepted_name_it) {
+			if (dont_load_all) {
+				bool pop_file = false;
+				auto pop_file_it = image_load_mask.begin();
+				for (auto accepted_name_it = image_load_mask.begin(); accepted_name_it != image_load_mask.end(); ++accepted_name_it) {
 
-				int pos_filename = 0;
-				if ((1 + filename.find_last_of("/")) < filename.length()) {
-					pos_filename = (int)filename.find_last_of("/");
-				} else {
-					break;
-				}
-				cv::String filename_without_path = filename.substr(pos_filename + 1, filename.find_last_of("."));
-				std::cout << filename_without_path << " == " << accepted_name_it->substr(0, filename.find_last_of(".")) << std::endl;
+					int pos_filename = 0;
+					if ((1 + filename.find_last_of("/")) < filename.length()) {
+						pos_filename = (int)filename.find_last_of("/");
+					} else {
+						break;
+					}
+					cv::String filename_without_path = filename.substr(pos_filename + 1, filename.find_last_of("."));
+					std::cout << filename_without_path << " == " << accepted_name_it->substr(0, filename.find_last_of(".")) << std::endl;
 
-				if (filename_without_path == accepted_name_it->substr(0, filename.find_last_of("."))) {
-					filenames_in_images_folder.push_back(filename);
-					pop_file = true;
-					pop_file_it = accepted_name_it;
-					break;
+					if (filename_without_path == accepted_name_it->substr(0, filename.find_last_of("."))) {
+						filenames_in_images_folder.push_back(filename);
+						pop_file = true;
+						pop_file_it = accepted_name_it;
+						break;
+					}
 				}
-			}
-			if (pop_file) {
-				image_load_mask.erase(pop_file_it);
+				if (pop_file) {
+					image_load_mask.erase(pop_file_it);
+				}
+			} else {
+				filenames_in_images_folder.push_back(filename);
 			}
 		}
 		std::vector<std::string> filenames_in_labels_folder;
