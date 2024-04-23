@@ -337,14 +337,58 @@ int main(int argc, char *argv[])
 			separate_labels = true;
 		}
 
+		std::string image_load_mask_file = "";
+		bool dont_load_all = false;
+		if (argc >= 6) {
+			image_load_mask_file = std::string(argv[5]);
+			dont_load_all = true;
+		}
+
 		bool show_mouse_coords = false;
+
+		std::vector<cv::String> image_load_mask;
+		// load mask for which images to open
+		if (dont_load_all) {
+			std::ifstream ifs(image_load_mask_file);
+			if (!ifs.is_open()) {
+				throw(std::runtime_error("Can't open file: " + image_load_mask_file));
+			}
+
+			for (std::string line; getline(ifs, line);)
+				image_load_mask.push_back(line);
+		}
+		std::cout << "File loaded: " << image_load_mask_file << std::endl;
+
 		std::vector<std::string> filenames_in_images_folder;
 		//glob(images_path, filenames_in_images_folder); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
 		cv::String path_cv = images_path;
 		std::vector<cv::String> filenames_in_folder_cv;
 		glob(path_cv, filenames_in_folder_cv); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
-		for (auto &i : filenames_in_folder_cv) 
-			filenames_in_images_folder.push_back(i);
+		for (auto &filename : filenames_in_folder_cv) { 
+			bool pop_file = false;
+			auto pop_file_it = image_load_mask.begin();
+			for (auto accepted_name_it = image_load_mask.begin(); accepted_name_it != image_load_mask.end(); ++accepted_name_it) {
+
+				int pos_filename = 0;
+				if ((1 + filename.find_last_of("/")) < filename.length()) {
+					pos_filename = (int)filename.find_last_of("/");
+				} else {
+					break;
+				}
+				cv::String filename_without_path = filename.substr(pos_filename + 1, filename.find_last_of("."));
+				std::cout << filename_without_path << " == " << accepted_name_it->substr(0, filename.find_last_of(".")) << std::endl;
+
+				if (filename_without_path == accepted_name_it->substr(0, filename.find_last_of("."))) {
+					filenames_in_images_folder.push_back(filename);
+					pop_file = true;
+					pop_file_it = accepted_name_it;
+					break;
+				}
+			}
+			if (pop_file) {
+				image_load_mask.erase(pop_file_it);
+			}
+		}
 		std::vector<std::string> filenames_in_labels_folder;
 		if (separate_labels) {
 			path_cv = labels_path;
