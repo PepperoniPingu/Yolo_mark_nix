@@ -377,7 +377,6 @@ int main(int argc, char *argv[])
 						break;
 					}
 					cv::String filename_without_path = filename.substr(pos_filename + 1, filename.find_last_of("."));
-					std::cout << filename_without_path << " == " << accepted_name_it->substr(0, filename.find_last_of(".")) << std::endl;
 
 					if (filename_without_path == accepted_name_it->substr(0, filename.find_last_of("."))) {
 						filenames_in_images_folder.push_back(filename);
