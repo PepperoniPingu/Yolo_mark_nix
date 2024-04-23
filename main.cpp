@@ -326,29 +326,47 @@ int main(int argc, char *argv[])
 					std::cout << "saved " << img_name << std::endl;
 					cv::imwrite(img_name, frame);
 				}
-			}
+			} 
 			exit(0);
+		} 
+		
+		std::string labels_path = "";
+		bool separate_labels = false;
+		if (argc >= 5) {
+			labels_path = std::string(argv[4]);
+			separate_labels = true;
 		}
 
 		bool show_mouse_coords = false;
-		std::vector<std::string> filenames_in_folder;
-		//glob(images_path, filenames_in_folder); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
-		cv::String images_path_cv = images_path;
+		std::vector<std::string> filenames_in_images_folder;
+		//glob(images_path, filenames_in_images_folder); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
+		cv::String path_cv = images_path;
 		std::vector<cv::String> filenames_in_folder_cv;
-		glob(images_path_cv, filenames_in_folder_cv); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
+		glob(path_cv, filenames_in_folder_cv); // void glob(String pattern, std::vector<String>& result, bool recursive = false);
 		for (auto &i : filenames_in_folder_cv) 
-			filenames_in_folder.push_back(i);
+			filenames_in_images_folder.push_back(i);
+		std::vector<std::string> filenames_in_labels_folder;
+		if (separate_labels) {
+			path_cv = labels_path;
+			filenames_in_folder_cv.clear();
+			glob(path_cv, filenames_in_folder_cv);
+			for (auto &i : filenames_in_folder_cv) 
+				filenames_in_labels_folder.push_back(i);
+		}
+
+		
 
 		std::vector<std::string> jpg_filenames_path;
 		std::vector<std::string> jpg_filenames;
 		std::vector<std::string> jpg_filenames_without_ext;
 		std::vector<std::string> image_ext;
+		std::vector<std::string> txt_filenames_path;
 		std::vector<std::string> txt_filenames;
 		std::vector<std::string> jpg_in_train;
 		std::vector<std::string> synset_txt;
 
         // image-paths to txt-paths
-		for (auto &i : filenames_in_folder)
+		for (auto &i : filenames_in_images_folder)
 		{
 			int pos_filename = 0;
 			if ((1 + i.find_last_of("\\")) < i.length()) pos_filename = 1 + i.find_last_of("\\");
@@ -370,8 +388,27 @@ int main(int argc, char *argv[])
 				jpg_filenames.push_back(filename);
 				jpg_filenames_path.push_back(i);
 			}
-			if (ext == "txt") {
+			if (!separate_labels && ext == "txt") {
 				txt_filenames.push_back(filename_without_ext);
+				txt_filenames_path.push_back(i);
+			}
+		}
+		if (separate_labels) {
+			for (auto &i : filenames_in_labels_folder)
+			{
+				int pos_filename = 0;
+				if ((1 + i.find_last_of("\\")) < i.length()) pos_filename = 1 + i.find_last_of("\\");
+				if ((1 + i.find_last_of("/")) < i.length()) pos_filename = std::max(pos_filename, 1 + (int)i.find_last_of("/"));
+
+
+				std::string const filename = i.substr(pos_filename);
+				std::string const ext = i.substr(i.find_last_of(".") + 1);
+				std::string const filename_without_ext = filename.substr(0, filename.find_last_of("."));
+
+				if (ext == "txt") {
+					txt_filenames.push_back(filename_without_ext);
+					txt_filenames_path.push_back(i);
+				}
 			}
 		}
 		std::sort(jpg_filenames.begin(), jpg_filenames.end());
@@ -517,7 +554,7 @@ int main(int argc, char *argv[])
 						std::string const jpg_filename = jpg_filenames[old_trackbar_value];
 						std::string const filename_without_ext = jpg_filename.substr(0, jpg_filename.find_last_of("."));
 						std::string const txt_filename = filename_without_ext + ".txt";
-						std::string const txt_filename_path = images_path + "/" + txt_filename;
+						std::string const txt_filename_path = (separate_labels ? labels_path : images_path) + "/" + txt_filename;
 
 						std::cout << "txt_filename_path = " << txt_filename_path << std::endl;
 
@@ -585,7 +622,7 @@ int main(int argc, char *argv[])
 							std::string const jpg_filename = jpg_filenames[trackbar_value];
 							std::string const txt_filename = jpg_filename.substr(0, jpg_filename.find_last_of(".")) + ".txt";
 							//std::cout << (images_path + "/" + txt_filename) << std::endl;
-							std::ifstream ifs(images_path + "/" + txt_filename);
+							std::ifstream ifs((separate_labels ? labels_path : images_path) + "/" + txt_filename);
                             if (copy_previous_marks) copy_previous_marks = false;
                             else if (tracker_copy_previous_marks) {
                                 tracker_copy_previous_marks = false;
